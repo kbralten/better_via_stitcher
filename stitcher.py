@@ -302,6 +302,7 @@ class ViaStitcher:
         """
         other_zones = []
         for zone in self.board.get_zones():
+
             net_name = zone.net.name if zone.net else "No Net"
             if net_name == target_net_name:
                 continue
@@ -329,7 +330,7 @@ class ViaStitcher:
 
 
 
-    def stitch(self, net_name, via_diameter, via_drill, grid_x, grid_y, stagger, ignored_zone_ids=None, progress_callback=None):
+    def stitch(self, net_name, via_diameter, via_drill, grid_x, grid_y, stagger, ignored_zone_ids=None, refill_after=True, progress_callback=None):
         """
         Generates stitching vias.
         
@@ -341,6 +342,7 @@ class ViaStitcher:
             grid_y (float): Y spacing in mm.
             stagger (bool): Whether to stagger rows.
             ignored_zone_ids (list): List of zone UUIDs to ignore.
+            refill_after (bool): If True, refill all zones after stitching.
             progress_callback (callable): Optional callback(percent, status) for progress updates.
         
         Returns:
@@ -372,6 +374,8 @@ class ViaStitcher:
         
         if not zones:
             return 0
+
+
 
         # 2. Determine Bounding Box for Stitching
         # We want the union of all bounding boxes of these zones.
@@ -532,5 +536,13 @@ class ViaStitcher:
                     
             except Exception as e:
                 print(f"Error adding vias: {e}")
+        
+
+        elif refill_after:
+            # Refill zones after stitching (only if refill_islands wasn't used)
+            if progress_callback:
+                progress_callback(99, "Refilling zones...")
+            
+            self.board.refill_zones()
                 
         return len(vias_to_add)

@@ -65,8 +65,8 @@ class ViaStitcherDialog(wx.Dialog):
         grid_sizer.Add(wx.StaticText(panel, label="Options:"), 0, wx.ALIGN_CENTER_VERTICAL)
         options_sizer = wx.BoxSizer(wx.VERTICAL)
         self.chk_stagger = wx.CheckBox(panel, label="Stagger Rows")
-        
         options_sizer.Add(self.chk_stagger, 0, wx.BOTTOM, 5)
+        options_sizer.Add(self.chk_refill_after, 0, wx.BOTTOM, 5)
         grid_sizer.Add(options_sizer, 1, wx.EXPAND)
         
         vbox.Add(grid_sizer, 0, wx.ALL | wx.EXPAND, 15)
@@ -108,6 +108,8 @@ class ViaStitcherDialog(wx.Dialog):
     def on_net_change(self, event):
         self.update_zone_list()
         
+
+        
     def update_zone_list(self):
         """Update the checklist of other zones based on target net"""
         target_net = self.net_choice.GetStringSelection()
@@ -137,6 +139,7 @@ class ViaStitcherDialog(wx.Dialog):
             gx = float(self.grid_x.GetValue())
             gy = float(self.grid_y.GetValue())
             stagger = self.chk_stagger.GetValue()
+            refill_after = self.chk_refill_after.GetValue()
         except ValueError:
             wx.MessageBox("Invalid input values. Please check numbers.", "Error", wx.OK | wx.ICON_ERROR)
             return
@@ -165,6 +168,8 @@ class ViaStitcherDialog(wx.Dialog):
                 grid_y=gy, 
                 stagger=stagger, 
                 ignored_zone_ids=ignored_ids,
+                ignored_zone_ids=ignored_ids,
+                refill_after=refill_after,
                 progress_callback=self.update_progress
             )
             
