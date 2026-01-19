@@ -23,7 +23,7 @@ class ViaStitcherDialog(wx.Dialog):
         vbox.Add(info_text, 0, wx.ALL | wx.CENTER, 10)
         
         # Grid for form inputs
-        grid_sizer = wx.FlexGridSizer(rows=6, cols=2, vgap=10, hgap=10)
+        grid_sizer = wx.FlexGridSizer(rows=8, cols=2, vgap=10, hgap=10)
         
         # 1. Net Selection
         grid_sizer.Add(wx.StaticText(panel, label="Net:"), 0, wx.ALIGN_CENTER_VERTICAL)
@@ -60,6 +60,18 @@ class ViaStitcherDialog(wx.Dialog):
         grid_sizer.Add(wx.StaticText(panel, label="Grid Y (mm):"), 0, wx.ALIGN_CENTER_VERTICAL)
         self.grid_y = wx.TextCtrl(panel, value="2.5")
         grid_sizer.Add(self.grid_y, 1, wx.EXPAND)
+
+        # 6. Offset X
+        grid_sizer.Add(wx.StaticText(panel, label="Offset X (mm):"), 0, wx.ALIGN_CENTER_VERTICAL)
+        self.offset_x = wx.TextCtrl(panel, value="0.0")
+        grid_sizer.Add(self.offset_x, 1, wx.EXPAND)
+
+        # 7. Offset Y
+        grid_sizer.Add(wx.StaticText(panel, label="Offset Y (mm):"), 0, wx.ALIGN_CENTER_VERTICAL)
+        self.offset_y = wx.TextCtrl(panel, value="0.0")
+        grid_sizer.Add(self.offset_y, 1, wx.EXPAND)
+
+
 
         # 6. Options
         grid_sizer.Add(wx.StaticText(panel, label="Options:"), 0, wx.ALIGN_CENTER_VERTICAL)
@@ -141,6 +153,8 @@ class ViaStitcherDialog(wx.Dialog):
             drill = float(self.via_drill.GetValue())
             gx = float(self.grid_x.GetValue())
             gy = float(self.grid_y.GetValue())
+            off_x = float(self.offset_x.GetValue())
+            off_y = float(self.offset_y.GetValue())
             stagger = self.chk_stagger.GetValue()
             refill_after = self.chk_refill_after.GetValue()
         except ValueError:
@@ -169,9 +183,10 @@ class ViaStitcherDialog(wx.Dialog):
                 via_drill=drill, 
                 grid_x=gx, 
                 grid_y=gy, 
+                offset_x=off_x,
+                offset_y=off_y,
                 stagger=stagger, 
                 ignored_zone_ids=ignored_ids,
-
                 refill_after=refill_after,
                 progress_callback=self.update_progress
             )

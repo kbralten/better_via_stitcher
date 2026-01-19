@@ -414,7 +414,7 @@ class ViaStitcher:
 
 
 
-    def stitch(self, net_name, via_diameter, via_drill, grid_x, grid_y, stagger, ignored_zone_ids=None, refill_after=True, progress_callback=None):
+    def stitch(self, net_name, via_diameter, via_drill, grid_x, grid_y, offset_x=0, offset_y=0, stagger=False, ignored_zone_ids=None, refill_after=True, progress_callback=None):
         """
         Generates stitching vias.
         
@@ -424,6 +424,8 @@ class ViaStitcher:
             via_drill (float): Drill size in mm.
             grid_x (float): X spacing in mm.
             grid_y (float): Y spacing in mm.
+            offset_x (float): Offset X pattern in mm.
+            offset_y (float): Offset Y pattern in mm.
             stagger (bool): Whether to stagger rows.
             ignored_zone_ids (list): List of zone UUIDs to ignore.
             refill_after (bool): If True, refill all zones after stitching.
@@ -525,27 +527,15 @@ class ViaStitcher:
         end_x = start_x + overall_bbox.size.x
         end_y = start_y + overall_bbox.size.y
         
-        # Assuming units are consistent. If units are mm, grid_x/y work directly.
-        # If units are nm, we need conversion. 
-        # Standard KiCad native units are integers (nm). 
-        # kipy might wrap this. Let's assume kipy handles units transparently or exposes them.
-        # From the `ipc_entry.py` sample, it uses `get_socket_path`, standard python stuff.
-        # Let's try to assume mm for input params, but we might need to check BBox magnitude.
-        # If BBox is huge (e.g. 100000000), it's nm. If it's 100, it's mm.
-        # Safer: Input grid is user-facing (mm).
-        
-        # Let's assume for now we are working in the board's coordinate system.
-        # We'll need a way to verify units. 
-        # For now, let's treat grid_x, grid_y as deltas in the same unit system as bbox.
-        # But wait, user inputs 5 (mm). If board is nm, we place 5nm apart!
-        # Check `board.get_design_settings()`. 
-        # Actually, let's look at `ui.py` later for unit handling or just use a safe conversion factor.
-        # Standard KiCad 1 mm = 1,000,000 nm.
-        # Let's guess: kipy returns `Vector2` which often wraps C++ `VECTOR2I` (nm).
+        # All inputs are in mm, scale to nm
         SCALE = 1000000 # 1mm in nm
         
         gx = int(grid_x * SCALE)
         gy = int(grid_y * SCALE)
+        
+        # Apply offsets (convert mm to nm)
+        start_x += int(offset_x * SCALE)
+        start_y += int(offset_y * SCALE)
         
         # Ensure we don't loop forever if grid is 0
         if gx <= 0: gx = int(1 * SCALE)
