@@ -9,6 +9,7 @@ temp_dir = tempfile.gettempdir()
 log_file = os.path.join(temp_dir, 'better_via_stitcher.log')
 
 def log(msg):
+    print(f"{time.strftime('%Y-%m-%d %H:%M:%S')} - {msg}")
     with open(log_file, 'a') as f:
         f.write(f"{time.strftime('%Y-%m-%d %H:%M:%S')} - {msg}\n")
 

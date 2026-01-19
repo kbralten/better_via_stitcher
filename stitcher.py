@@ -538,7 +538,7 @@ class ViaStitcher:
                 print(f"Error adding vias: {e}")
         
 
-        elif refill_after:
+        if refill_after:
             # Refill zones after stitching (only if refill_islands wasn't used)
             if progress_callback:
                 progress_callback(99, "Refilling zones...")

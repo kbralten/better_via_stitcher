@@ -66,6 +66,9 @@ class ViaStitcherDialog(wx.Dialog):
         options_sizer = wx.BoxSizer(wx.VERTICAL)
         self.chk_stagger = wx.CheckBox(panel, label="Stagger Rows")
         options_sizer.Add(self.chk_stagger, 0, wx.BOTTOM, 5)
+        
+        self.chk_refill_after = wx.CheckBox(panel, label="Refill Zones After Stitching")
+        self.chk_refill_after.SetValue(True)  # Checked by default
         options_sizer.Add(self.chk_refill_after, 0, wx.BOTTOM, 5)
         grid_sizer.Add(options_sizer, 1, wx.EXPAND)
         
@@ -168,7 +171,7 @@ class ViaStitcherDialog(wx.Dialog):
                 grid_y=gy, 
                 stagger=stagger, 
                 ignored_zone_ids=ignored_ids,
-                ignored_zone_ids=ignored_ids,
+
                 refill_after=refill_after,
                 progress_callback=self.update_progress
             )
