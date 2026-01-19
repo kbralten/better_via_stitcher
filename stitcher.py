@@ -195,14 +195,98 @@ class ViaStitcher:
             radius_px = int(v.diameter / resolution / 2)
             draw_circle(px, py, radius_px)
         
-        # Tracks
+        # Tracks & Arcs
+        def draw_arc_approx(arc, width_px):
+            """Approximate arc with line segments"""
+            # Helper to get points on arc
+            # We assume arc has center, radius, start_angle, angle (in degrees?)
+            # Or start, mid, end. KiPy usually wraps pcbnew.
+            # Let's try to be generic or check attributes.
+            
+            # Common Arc attributes: start, end, mid (or center)
+            # If we assume it's a PCB_ARC, it has a shape.
+            
+            # Let's iterate with small angle steps
+            # If we don't know the exact math, dividing into segments from start->mid->end 
+            # might be too coarse.
+            
+            # Simple approximation: 
+            # If we have 'mid' point? 
+            has_mid = hasattr(arc, 'mid')
+            has_center = hasattr(arc, 'center')
+            
+            segments = []
+            
+            if has_center and hasattr(arc, 'angle'):
+                # Center + Angle (e.g. KiCad native style)
+                # We need start angle.
+                # start point = center + vector(r, start_angle)
+                # This is getting complicated without knowing the exact API.
+                # However, usually get_tracks() returns simple objects.
+                
+                # FALLBACK: If we can't do perfect math, let's just 
+                # draw start->mid->end if mid exists, else start->end
+                pass
+
+            # Safe approximation for now:
+            # If it has a 'mid' point, draw start-mid and mid-end.
+            if hasattr(arc, 'mid'):
+                p_start = to_pixel(arc.start)
+                p_mid = to_pixel(arc.mid)
+                p_end = to_pixel(arc.end)
+                draw_line(p_start[0], p_start[1], p_mid[0], p_mid[1], width_px)
+                draw_line(p_mid[0], p_mid[1], p_end[0], p_end[1], width_px)
+            # Check for center/angle based arc (often used in plugins)
+            elif hasattr(arc, 'center') and hasattr(arc, 'angle'):
+                 # Try to discretize
+                 cx, cy = to_pixel(arc.center)
+                 sx, sy = to_pixel(arc.start)
+                 # radius in pixels
+                 r = math.sqrt((sx - cx)**2 + (sy - cy)**2)
+                 
+                 start_angle = math.atan2(sy - cy, sx - cx)
+                 # angle is likely in degrees, convert to rad
+                 # Note: KiCad angles can be tenths of degrees. Assuming float degrees here based on typical python bindings.
+                 angle_rad = math.radians(arc.angle)
+                 
+                 steps = 10 # reasonable default
+                 if r > 0:
+                     # larger radius needs more steps. roughly 1 step per 5 pixels?
+                     steps = max(5, int(abs(angle_rad) * r / 5))
+                 
+                 prev_x, prev_y = sx, sy
+                 for i in range(1, steps + 1):
+                     theta = start_angle + (angle_rad * i / steps)
+                     nx = int(cx + r * math.cos(theta))
+                     ny = int(cy + r * math.sin(theta))
+                     draw_line(prev_x, prev_y, nx, ny, width_px)
+                     prev_x, prev_y = nx, ny
+            else:
+                # Fallback to straight line
+                x1, y1 = to_pixel(arc.start)
+                x2, y2 = to_pixel(arc.end)
+                draw_line(x1, y1, x2, y2, width_px)
+
         for t in self.board.get_tracks():
             if t.net and t.net.name == net_name:
                 continue
-            x1, y1 = to_pixel(t.start)
-            x2, y2 = to_pixel(t.end)
+            
             width_px = int(t.width / resolution)
-            draw_line(x1, y1, x2, y2, width_px)
+            
+            # Check if it's an arc
+            # Usually strict type check is better but duck typing works
+            is_arc = False
+            if hasattr(t, 'angle') and t.angle != 0:
+                is_arc = True
+            elif hasattr(t, 'mid'):
+                is_arc = True
+                
+            if is_arc:
+                draw_arc_approx(t, width_px)
+            else:
+                x1, y1 = to_pixel(t.start)
+                x2, y2 = to_pixel(t.end)
+                draw_line(x1, y1, x2, y2, width_px)
         
         # Zones of other nets
         for zone in self.board.get_zones():
@@ -415,7 +499,14 @@ class ViaStitcher:
         # Step 4: Apply clearance by eroding valid areas
         if progress_callback:
             progress_callback(60, "Applying clearance...")
-        valid_bitmap = self.apply_clearance(valid_bitmap.astype(np.uint8), CLEARANCE, RESOLUTION)
+            
+        # Fix: Clearance must include the Via's own radius!
+        # Otherwise the via center can be placed 'Clearance' away from obstacle,
+        # causing the via edge to touch the obstacle.
+        via_radius_nm = (via_diameter * 1000000) / 2
+        effective_clearance = via_radius_nm + CLEARANCE
+        
+        valid_bitmap = self.apply_clearance(valid_bitmap.astype(np.uint8), effective_clearance, RESOLUTION)
         
         if progress_callback:
             progress_callback(65, "Generating via grid...")
