@@ -1,0 +1,24 @@
+{
+    "$schema": "https://go.kicad.org/api/schemas/v1",
+    "identifier": "com.github.kbralten.better_via_stitcher",
+    "name": "Better Via Stitcher",
+    "description": "A robust via stitching plugin for KiCad utilizando the IPC API.",
+    "version": "0.1.0",
+    "kicad_version": "9.99",
+    "status": "stable",
+    "runtime": {
+        "type": "python"
+    },
+    "actions": [
+        {
+            "identifier": "stitch_vias",
+            "name": "Better Via Stitcher",
+            "description": "Open the Better Via Stitcher tool",
+            "show-button": true,
+            "scopes": ["pcb"],
+            "entrypoint": "ipc_entry.py",
+            "icons-light": ["resources/icon.png"],
+            "icons-dark": ["resources/icon.png"]
+        }
+    ]
+}
